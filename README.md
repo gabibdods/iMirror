@@ -1,87 +1,172 @@
-# 🖥️ iPad as a Low-Latency Wireless Monitor + Drawing Tablet
+# iMirror
 
-This project turns an iPad into a **wireless second display** and **input tablet** using Apple Pencil — similar to Duet Display or Astropad Studio, but self-built and optimized for LAN performance. It streams real-time frames from a computer to the iPad while sending Apple Pencil input back for interaction, sketching, or handwriting.
+# Low-Latency Wireless Monitor and Input Tablet
 
----
+### Description
 
-## 🔍 Problem Statement
-
-While there are commercial tools that enable screen mirroring and Apple Pencil drawing to a computer, they are often expensive, proprietary, or limited in customization. I wanted to:
-
-- Build an **open-source solution** that streams my PC screen to an iPad in real-time
-- Capture **Apple Pencil input** and mirror it back to the PC
-- Achieve **low latency** with minimal encoding or overhead
-- Deepen my understanding of **real-time streaming, mobile sockets, and custom UI rendering**
+- This project transforms an iPad into a wireless, low-latency secondary monitor and Apple Pencil input tablet
+- It streams desktop screen frames to the iPad in near real-time and captures Apple Pencil input (with pressure and tilt) for display and interaction on the computer
 
 ---
 
-## 🎯 Project Goals
+## NOTICE
 
-- 🖼️ **Stream PC screen content** (as image frames) to iPad in near real-time
-- ✏️ **Capture and transmit Apple Pencil input** (with pressure and tilt) from iPad to PC
-- 🔄 Create a **bi-directional WebSocket or UDP pipeline**
-- 🧪 Build a responsive and minimal user interface on both devices
-- 📶 Enable stable LAN communication with low latency and minimal CPU usage
-- 🛠️ Make the system **modular and extensible** (e.g. add gesture control or drawing playback)
+- Please read through this `README.md` to better understand the project's source code and setup instructions
+- Also, make sure to review the contents of the `License/` directory
+- Your attention to these details is appreciated — enjoy exploring the project!
 
 ---
 
-## 🛠️ Tools & Technology Stack
+## Problem Statement
 
-| Component             | Technology                                 |
-|-----------------------|--------------------------------------------|
-| 📲 iPad App           | Swift + UIKit / SwiftUI, `UIPencilInteraction` |
-| 📡 Network Protocols  | WebSocket (binary), UDP (optional)         |
-| 🧠 Data Format        | JSON (stroke data), JPEG/PNG (image stream)|
-| 💻 PC Server          | Python (FastAPI / WebSocket), or C#/Node.js |
-| 🎨 PC Canvas Renderer | OpenCV / Tkinter / PyQt / WPF              |
-| 🖼️ Video Streaming    | `UIImageView` or `Metal` on iOS            |
+- Commercial tools like Duet Display or Astropad Studio offer screen mirroring and input capabilities but are often costly, proprietary, or lack customization
+- This project aims to create an open-source, customizable system that provides a high-performance, LAN-based alternative with full Apple Pencil support
 
 ---
 
-## 🧩 Design Decisions
+## Project Goals
 
-- Chose **WebSocket** for bi-directional low-latency communication and ease of implementation
-- Used **binary image streaming** (e.g. JPEG or PNG) over WebSocket to avoid video codec overhead
-- Designed a **modular Swift app** that:
-    - Displays streamed frames
-    - Captures touch and Pencil data
-- On PC side, used **Python** with WebSocket server and GUI toolkit (e.g. Tkinter, PyQt, or OpenCV) for rapid testing and cross-platform compatibility
+### Real-Time Display Streaming
 
----
+- Stream PC or laptop display frames to an iPad with minimal latency using efficient image encoding
 
-## ⚔️ Challenges & Solutions
+### Bi-Directional Interaction
 
-| Challenge                              | Solution                                                                |
-|---------------------------------------|-------------------------------------------------------------------------|
-| Handling image transmission           | Streamed JPEG frames via binary WebSocket messages                      |
-| Capturing Apple Pencil input data     | Used `touchesMoved` and `UIPencilInteraction` APIs in Swift             |
-| Transmitting input back to PC         | Sent strokes as JSON packets with position, pressure, tilt              |
-| Rendering on PC with real-time updates| Used OpenCV/PyQt canvas with draw loop and buffer clearing              |
-| Achieving low latency on WiFi         | Tuned packet sizes, compression quality, and disabled full video encoding |
+- Capture Apple Pencil input on the iPad and send the data (position, pressure, tilt) back to the PC for display or interaction
 
 ---
 
-## 📚 Lessons Learned
+## Tools, Materials & Resources
 
-- Built end-to-end **LAN-based streaming pipeline** using WebSockets
-- Learned how to **capture high-fidelity Pencil input** including pressure and tilt
-- Gained experience in Swift/iOS native UI development and socket programming
-- Explored image compression, buffering, and real-time UI rendering in Python
-- Managed **synchronization and data flow** between two asynchronously updating UIs
+### iPad App
+
+- Developed using Swift with UIKit or SwiftUI, leveraging UIPencilInteraction to capture stylus input
+
+### PC Server
+
+- Built with Python (FastAPI and WebSocket), C#, or Node.js for serving screen frames and receiving input events
+
+### Streaming & Data
+
+- WebSocket for two-way communication; JPEG or PNG encoding for frame transmission; JSON for stroke data
 
 ---
 
-## 🖼️ Architecture Overview
+## Design Decision
+
+### WebSocket-Based Pipeline
+
+- Chosen for efficient, low-latency bi-directional communication over LAN
+
+### Modular Architecture
+
+- Separate iPad and PC modules allow rapid testing and component replacement (e.g., swap OpenCV with PyQt)
+
+### Binary + JSON Protocol
+
+- Stream binary image frames and send Pencil data as lightweight JSON packets for clarity and performance
+
+---
+
+## Features
+
+### Wireless Screen Streaming
+
+- Stream PC screen content in near real-time using binary-encoded JPEG frames
+
+### Apple Pencil Data Capture
+
+- Capture position, pressure, and tilt using native iOS APIs and forward input to the PC
+
+### Two-Way Communication
+
+- Establish a low-latency WebSocket or UDP tunnel between devices for interactivity
+
+---
+
+## Block Diagram
 
 ```plaintext
-         +---------------------+               +----------------------------+
-         |     PC or Laptop    |               |         iPad (iOS App)     |
-         |---------------------|               |----------------------------|
-         | - Captures screen   |               | - Receives image stream    |
-         | - Encodes to JPEG   |  WebSocket    | - Displays UIImageView     |
-         | - Sends binary img  | <===========> |                            |
-         | - Receives Pencil   |               | - Sends strokes            |
-         |   strokes           |               | - Coordinates + pressure   |
-         | - Renders input     |               +----------------------------+
-         +---------------------+
+                                  ┌─────────────────────┐
+                                  │     PC or Laptop    │
+                                  ├─────────────────────┤
+                                  │ - Capture screen    │
+                                  │ - Encode as JPEG    │
+                                  │ - Send via WebSocket│
+                                  │ - Receive strokes   │
+                                  └─────────┬───────────┘
+                                            │
+                                   WebSocket/UDP Tunnel
+                                            │
+                                  ┌─────────▼─────────────┐
+                                  │    iPad (iOS App)     │
+                                  ├───────────────────────┤
+                                  │ - Display image stream│
+                                  │ - Capture Pencil input│
+                                  │ - Transmit strokes    │
+                                  └───────────────────────┘
+
+```
+
+---
+
+## Functional Overview
+
+- Capture and encode screen images from the host computer
+- Stream the images to the iPad over a WebSocket connection
+- Use the iPad to capture Apple Pencil strokes
+- Send stroke data back to the PC in JSON format
+- Render the strokes on the PC interface in real-time
+
+---
+
+## Challenges & Solutions
+
+### Network Latency and Performance
+
+- Used JPEG for lightweight encoding and WebSocket to minimize protocol overhead
+
+### Capturing Apple Pencil Data
+
+- Implemented UIPencilInteraction and touchesMoved in Swift to get high-resolution stylus data
+
+---
+
+## Lessons Learned
+
+### Real-Time Streaming Over LAN
+
+- Achieved high-performance display streaming using WebSocket and frame compression
+
+### Advanced Swift Interaction APIs
+
+- Learned native methods to capture stylus input with pressure and tilt support
+
+---
+
+## Project Structure
+
+```plaintext
+root/
+├── License/
+│   ├── LICENSE.md
+│   │
+│   └── NOTICE.md
+│
+├── .gitattributes
+│
+├── .gitignore
+│
+└── README.md
+
+```
+
+---
+
+## Future Enhancements
+
+- Add gesture support and dynamic cursor rendering
+- Implement WebRTC or QUIC for even lower latency
+- Embed drawing canvas into the iPad app
+- Add secure pairing and encrypted transport
+- Package entire system with Docker and build pipeline
